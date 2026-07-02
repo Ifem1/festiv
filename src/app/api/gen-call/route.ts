@@ -14,13 +14,9 @@ export async function POST(req: NextRequest) {
 
     const client = createClient({ chain: studionet });
 
-    const result = await client.readContract({
-      address: CONTRACT_ADDRESS,
-      functionName,
-      args,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      stateStatus: "accepted" as any,
-    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const readOptions: any = { address: CONTRACT_ADDRESS, functionName, args, stateStatus: "accepted" };
+    const result = await client.readContract(readOptions);
 
     return NextResponse.json({ result });
   } catch (e) {
