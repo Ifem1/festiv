@@ -8,7 +8,8 @@ export async function POST(req: NextRequest) {
   try {
     const { functionName, args } = await req.json() as {
       functionName: string;
-      args: unknown[];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      args: any[];
     };
 
     const client = createClient({ chain: studionet });
