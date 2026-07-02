@@ -18,7 +18,8 @@ export async function POST(req: NextRequest) {
       address: CONTRACT_ADDRESS,
       functionName,
       args,
-      stateStatus: "accepted",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      stateStatus: "accepted" as any,
     });
 
     return NextResponse.json({ result });
