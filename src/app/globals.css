@@ -1,0 +1,64 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300;1,9..144,400&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap");
+@import "tailwindcss";
+
+:root {
+  --night-plum: #17111F;
+  --ritual-wine: #4B1F35;
+  --ember-coral: #E46F5A;
+  --pollen-gold: #E7B95B;
+  --soft-linen: #F7EFE2;
+  --ash-rose: #BFA6A0;
+  --sage-smoke: #A9B8A6;
+  --deep-ink: #121217;
+  --vow-violet: #7C5CFF;
+  --consensus-blue: #62D5FF;
+}
+
+@theme inline {
+  --color-background: var(--night-plum);
+  --color-foreground: var(--soft-linen);
+  --font-sans: "Inter", sans-serif;
+  --font-display: "Fraunces", serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--night-plum);
+  color: var(--soft-linen);
+  font-family: "Inter", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: "Fraunces", serif;
+}
+
+.font-mono {
+  font-family: "IBM Plex Mono", monospace;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--deep-ink);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--ritual-wine);
+  border-radius: 3px;
+}
+
+/* Selection */
+::selection {
+  background: var(--vow-violet);
+  color: var(--soft-linen);
+}
