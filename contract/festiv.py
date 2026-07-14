@@ -342,10 +342,19 @@ requires_human_review must be a boolean (true or false).""",
         raw = self.rituals.get(ritual_id, "")
         if raw == "":
             raise gl.vm.UserError("ritual not found")
+        ritual = self._load(raw)
+        if not ritual.get("public_visibility", False) and ritual.get("creator", "") != self._sender():
+            raise gl.vm.UserError("private ritual: only creator can read")
         return raw
 
     @gl.public.view
     def get_ritual_plan(self, ritual_id: str) -> str:
+        ritual_raw = self.rituals.get(ritual_id, "")
+        if ritual_raw == "":
+            raise gl.vm.UserError("ritual not found")
+        ritual = self._load(ritual_raw)
+        if not ritual.get("public_visibility", False) and ritual.get("creator", "") != self._sender():
+            raise gl.vm.UserError("private ritual: only creator can read")
         raw = self.ritual_plans.get(ritual_id, "")
         if raw == "":
             raise gl.vm.UserError("plan not found")

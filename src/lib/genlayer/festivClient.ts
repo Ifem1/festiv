@@ -19,11 +19,11 @@ const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS as `0
 
 // ── Read: server-side proxy avoids CORS and browser rate-limit storms ──────────
 
-async function genCall(functionName: string, args: unknown[]): Promise<unknown> {
+async function genCall(functionName: string, args: unknown[], account?: string): Promise<unknown> {
   const res = await fetch("/api/gen-call", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ functionName, args }),
+    body: JSON.stringify({ functionName, args, account }),
   });
   const json = await res.json();
   if (!res.ok || json.error) throw new Error(json.error?.message ?? `HTTP ${res.status}`);
@@ -129,6 +129,26 @@ export async function requestRitualPlan(ritualId: string, from: string): Promise
   return txHash as string;
 }
 
+export async function updateRitualBrief(
+  ritualId: string,
+  brief: Pick<RitualForm, "purpose" | "groupContext" | "toneTags" | "symbolsToInclude" | "symbolsToAvoid" | "culturalContext" | "accessibilityNeeds" | "boundaries">,
+  from: string,
+): Promise<string> {
+  if (!CONTRACT_ADDRESS) throw new Error("Contract address not configured.");
+  const client = writeClient(from as `0x${string}`);
+  const txHash = await client.writeContract({
+    address: CONTRACT_ADDRESS,
+    functionName: "update_ritual_brief",
+    args: [
+      ritualId, brief.purpose, brief.groupContext, brief.toneTags.join(", "),
+      brief.symbolsToInclude, brief.symbolsToAvoid, brief.culturalContext,
+      brief.accessibilityNeeds, brief.boundaries,
+    ],
+    value: BigInt(0),
+  });
+  return txHash as string;
+}
+
 export async function markCompleted(ritualId: string, from: string): Promise<string> {
   if (!CONTRACT_ADDRESS) throw new Error("Contract address not configured.");
   const client = writeClient(from as `0x${string}`);
@@ -155,16 +175,16 @@ export async function archiveRitual(ritualId: string, from: string): Promise<str
 
 // ── Reads ──────────────────────────────────────────────────────────────────────
 
-export async function getRitual(ritualId: string): Promise<RitualRequest> {
+export async function getRitual(ritualId: string, account?: string): Promise<RitualRequest> {
   if (!CONTRACT_ADDRESS) throw new Error("Contract address not configured.");
-  const raw = await genCall("get_ritual", [ritualId]);
+  const raw = await genCall("get_ritual", [ritualId], account);
   if (typeof raw === "string") return JSON.parse(raw) as RitualRequest;
   return raw as RitualRequest;
 }
 
-export async function getRitualPlan(ritualId: string): Promise<RitualPlanRecord> {
+export async function getRitualPlan(ritualId: string, account?: string): Promise<RitualPlanRecord> {
   if (!CONTRACT_ADDRESS) throw new Error("Contract address not configured.");
-  const raw = await genCall("get_ritual_plan", [ritualId]);
+  const raw = await genCall("get_ritual_plan", [ritualId], account);
   if (typeof raw === "string") return JSON.parse(raw) as RitualPlanRecord;
   return raw as RitualPlanRecord;
 }

@@ -123,7 +123,7 @@ festiv/
 |---|---|
 | Intelligent contract | GenLayer Python (v0.2.20) |
 | Chain | GenLayer StudioNet (chain ID 61999) |
-| Contract address | `0xf4e3515533760C86c0E7ddeF5A1868C2A1efCA71` |
+| Contract address | `0xC253252CeAdb03A656D2785df14E18211decDB20` |
 | Frontend | Next.js 16 (App Router, Turbopack) |
 | Language | TypeScript |
 | Styling | Tailwind CSS v4 |
@@ -183,7 +183,7 @@ Create `.env.local`:
 NEXT_PUBLIC_GENLAYER_CHAIN_ID=61999
 NEXT_PUBLIC_GENLAYER_RPC_URL=https://studio.genlayer.com/api
 NEXT_PUBLIC_GENLAYER_EXPLORER_URL=https://explorer-studio.genlayer.com
-NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS=0xf4e3515533760C86c0E7ddeF5A1868C2A1efCA71
+NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS=0xC253252CeAdb03A656D2785df14E18211decDB20
 ```
 
 ```bash
@@ -205,7 +205,7 @@ You will need:
 
 ## Deploying the Contract
 
-The contract is already deployed at `0xf4e3515533760C86c0E7ddeF5A1868C2A1efCA71` on GenLayer StudioNet.
+The contract is deployed at `0xC253252CeAdb03A656D2785df14E18211decDB20` on GenLayer StudioNet.
 
 To redeploy:
 1. Open [GenLayer Studio](https://studio.genlayer.com)

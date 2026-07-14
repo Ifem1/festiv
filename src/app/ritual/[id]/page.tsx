@@ -6,7 +6,7 @@ import Navbar from "@/components/festiv/Navbar";
 import RitualPlanRenderer from "@/components/festiv/RitualPlanRenderer";
 import ExplorerLink from "@/components/festiv/ExplorerLink";
 import WalletConnectButton from "@/components/festiv/WalletConnectButton";
-import { getRitual, getRitualPlan, requestRitualPlan, markCompleted, archiveRitual, getConnectedAddress } from "@/lib/genlayer/festivClient";
+import { getRitual, getRitualPlan, requestRitualPlan, updateRitualBrief, markCompleted, archiveRitual, getConnectedAddress } from "@/lib/genlayer/festivClient";
 import type { RitualRequest, RitualPlanRecord } from "@/types/ritual";
 import { Loader, CheckCircle, Archive, RefreshCw } from "lucide-react";
 
@@ -37,16 +37,21 @@ export default function RitualDetailPage({
   const [genError, setGenError] = useState<string | null>(null);
   const [address, setAddress] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [revision, setRevision] = useState({ purpose: "", groupContext: "", boundaries: "" });
 
   async function loadRitual() {
     setLoading(true);
     setError(null);
     try {
-      const r = await getRitual(id);
+      const connected = await getConnectedAddress();
+      setAddress(connected);
+      const r = await getRitual(id, connected ?? undefined);
       setRitual(r);
+      setRevision({ purpose: r.purpose, groupContext: r.group_context, boundaries: r.boundaries });
       if (["approved", "needs_revision", "unsafe", "completed"].includes(r.status)) {
         try {
-          const p = await getRitualPlan(id);
+          const p = await getRitualPlan(id, connected ?? undefined);
           setPlan(p);
         } catch {
           // plan not yet available
@@ -80,6 +85,30 @@ export default function RitualDetailPage({
       );
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function handleRevision() {
+    if (!address || !ritual) return;
+    setActionLoading(true);
+    setGenError(null);
+    try {
+      await updateRitualBrief(id, {
+        purpose: revision.purpose,
+        groupContext: revision.groupContext,
+        boundaries: revision.boundaries,
+        toneTags: ritual.tone_tags.split(",").map((value) => value.trim()).filter(Boolean),
+        symbolsToInclude: ritual.symbols_to_include,
+        symbolsToAvoid: ritual.symbols_to_avoid,
+        culturalContext: ritual.cultural_context,
+        accessibilityNeeds: ritual.accessibility_needs,
+      }, address);
+      setEditing(false);
+      await loadRitual();
+    } catch (e) {
+      setGenError(e instanceof Error ? e.message : "Could not revise brief.");
+    } finally {
+      setActionLoading(false);
     }
   }
 
@@ -207,6 +236,24 @@ export default function RitualDetailPage({
             {ritual.participant_count_band && <span>Participants: {ritual.participant_count_band}</span>}
           </div>
         </div>
+
+        {isCreator && ["submitted", "needs_revision"].includes(ritual.status) && (
+          <div className="mb-6">
+            <button onClick={() => setEditing((value) => !value)} className="text-sm text-[#E7B95B]">
+              {editing ? "Cancel revision" : "Revise brief"}
+            </button>
+            {editing && (
+              <div className="mt-4 grid gap-3 rounded-2xl border border-[#E7B95B]/25 p-5">
+                <textarea value={revision.purpose} onChange={(event) => setRevision({ ...revision, purpose: event.target.value })} aria-label="Purpose" className="rounded-lg bg-white/5 p-3 text-[#F7EFE2]" rows={3} />
+                <textarea value={revision.groupContext} onChange={(event) => setRevision({ ...revision, groupContext: event.target.value })} aria-label="Group context" className="rounded-lg bg-white/5 p-3 text-[#F7EFE2]" rows={3} />
+                <textarea value={revision.boundaries} onChange={(event) => setRevision({ ...revision, boundaries: event.target.value })} aria-label="Boundaries" className="rounded-lg bg-white/5 p-3 text-[#F7EFE2]" rows={3} />
+                <button onClick={handleRevision} disabled={actionLoading || !revision.purpose.trim()} className="rounded-full bg-[#E7B95B] px-5 py-2 text-sm text-[#17111F] disabled:opacity-40">
+                  Save revised brief
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Action buttons */}
         <div className="flex flex-wrap gap-3 mb-8">
