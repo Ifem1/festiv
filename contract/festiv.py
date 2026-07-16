@@ -1,5 +1,5 @@
-# v0.2.20
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+# Festiv contract schema version: 0.2.20
 
 from genlayer import *
 import json
@@ -91,6 +91,13 @@ class FestivContract(gl.Contract):
     def _require_allowed_type(self, ritual_type: str) -> None:
         if ritual_type not in ALLOWED_TYPES:
             raise gl.vm.UserError("unsupported ritual type: " + ritual_type)
+
+    def _duration(self, value: typing.Any) -> int:
+        try:
+            duration = int(value)
+        except (TypeError, ValueError):
+            return 30
+        return max(1, min(duration, 600))
 
     def _append_id(self, existing: str, item: str) -> str:
         if existing is None or existing == "":
@@ -211,9 +218,6 @@ class FestivContract(gl.Contract):
         if ritual.get("status", "") not in ("submitted", "needs_revision"):
             raise gl.vm.UserError("ritual not open for generation")
 
-        ritual["status"] = "generating"
-        self.rituals[ritual_id] = self._json(ritual)
-
         brief_json = self._json({
             "ritual_id": ritual.get("ritual_id", ""),
             "title": ritual.get("title", ""),
@@ -282,6 +286,12 @@ requires_human_review must be a boolean (true or false).""",
 
         result = self._load(result_json)
 
+        # Commit the in-progress state only after the nondeterministic call
+        # has returned. A failed validator call therefore leaves the ritual
+        # retryable in its previous submitted/needs_revision state.
+        ritual["status"] = "generating"
+        self.rituals[ritual_id] = self._json(ritual)
+
         status = str(result.get("status", "needs_revision"))
         if status not in ("approved", "needs_revision", "unsafe"):
             status = "needs_revision"
@@ -296,7 +306,7 @@ requires_human_review must be a boolean (true or false).""",
             "ritual_title": self._limit(result.get("ritual_title", ritual.get("title", "")), 160),
             "ritual_type": self._limit(result.get("ritual_type", ritual.get("ritual_type", "")), 80),
             "emotional_intent": self._limit(result.get("emotional_intent", ""), 1000),
-            "duration_minutes": int(result.get("recommended_duration_minutes", 30)),
+            "duration_minutes": self._duration(result.get("recommended_duration_minutes", 30)),
             "tone_summary": self._limit(result.get("tone_summary", ""), 1000),
             "plan_json": self._json(result),
             "consensus_envelope_json": self._json(envelope),

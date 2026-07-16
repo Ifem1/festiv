@@ -144,6 +144,10 @@ StudioNet's RPC returns `eth_gasPrice = 0`, but the chain rejects transactions w
 
 ## Contract Methods
 
+### Contract verification
+
+Install the official GenLayer test harness with `pip install -r requirements-dev.txt`, then run direct-mode tests with `pytest tests/direct -v`. The optional StudioNet integration entry point is `gltest tests/integration -v --network studionet`.
+
 ### Write
 
 | Method | Description |

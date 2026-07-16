@@ -24,7 +24,7 @@ All requested items have been implemented, deployed, and verified against GenLay
 ### Resolvable SDK dependency and tests
 
 - `genlayer-js` is pinned exactly to `1.1.8` in `package.json` and `package-lock.json`.
-- Contract tests cover private and public reads and the create, revise, generate, complete, and archive lifecycle.
+- Official `genlayer-test` direct-mode tests cover private and public reads and the create, revise, generate, and complete lifecycle; an opt-in `gltest` StudioNet integration entry point is included for consensus/network runs.
 - `scripts/e2e-studionet.mjs` provides a repeatable live StudioNet lifecycle test without embedding a private key.
 - The Next.js production build passes and the corrected application has been deployed to Vercel.
 

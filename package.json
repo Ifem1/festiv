@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "test": "python -m unittest contract/test_festiv.py",
+    "test": "pytest tests/direct -v",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
