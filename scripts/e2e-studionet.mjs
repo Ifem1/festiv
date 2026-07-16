@@ -4,7 +4,7 @@ import { studionet } from "genlayer-js/chains";
 const key = process.env.FESTIV_TEST_PRIVATE_KEY;
 if (!key) throw new Error("FESTIV_TEST_PRIVATE_KEY is required");
 
-const contract = "0xA111207eBa4604F80AFA046E52C0c56db0E2434C";
+const contract = "0x6E2754a16f06CE1e41c49423Dc9911A644df180D";
 const account = createAccount(key.startsWith("0x") ? key : `0x${key}`);
 const client = createClient({ chain: studionet, account });
 const stranger = createAccount();
