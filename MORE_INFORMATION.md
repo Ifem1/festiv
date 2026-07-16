@@ -32,7 +32,7 @@ All requested items have been implemented, deployed, and verified against GenLay
 
 | Resource | Address |
 | --- | --- |
-| GenLayer StudioNet contract | `0x6E2754a16f06CE1e41c49423Dc9911A644df180D` |
+| GenLayer StudioNet contract | `0xc5E0b6c759E788b06A479f79beAA18Db8c8Db526` |
 | Production application | https://festiv-smoky.vercel.app |
 | First test creator | `0xA49c51d759790116D451f256654dD9F0549D341F` |
 | Second test creator | `0x5Bf2926e49d5896C975B03fee2FDA5e96Cb4dD04` |
