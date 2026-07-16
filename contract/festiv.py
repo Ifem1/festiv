@@ -100,18 +100,36 @@ class FestivContract(gl.Contract):
         return max(1, min(duration, 600))
 
     def _generate_plan(self, brief_json: str) -> str:
-        """Keep the nondeterministic validator call isolated from storage writes."""
-        def produce_plan() -> typing.Any:
-            return gl.nondet.exec_prompt(
-                """Design a safe, accessible community ritual from this JSON brief. Return JSON only with status (approved, needs_revision, or unsafe), ritual_title, ritual_type, emotional_intent, recommended_duration_minutes, tone_summary, cultural_sensitivity_level, facilitator_style, opening_moment, sequence (4-8 complete steps), symbols, adaptation_notes, safety_notes, accessibility_notes, closing_moment, short_version, reasoning_summary, confidence, and consensus_envelope. Do not prescribe harm, forced participation, medical/legal/therapeutic authority, or cultural appropriation.\nBRIEF:\n""" + brief_json,
-                response_format="json",
+        """Generate once, then apply deterministic validator checks."""
+        prompt = """Design a safe, accessible community ritual from this JSON brief. Return JSON only with status (approved, needs_revision, or unsafe), ritual_title, ritual_type, emotional_intent, recommended_duration_minutes, tone_summary, cultural_sensitivity_level, facilitator_style, opening_moment, sequence (4-8 complete steps), symbols, adaptation_notes, safety_notes, accessibility_notes, closing_moment, short_version, reasoning_summary, confidence, and consensus_envelope. Do not prescribe harm, forced participation, medical/legal/therapeutic authority, or cultural appropriation.\nBRIEF:\n""" + brief_json
+
+        def leader_fn() -> typing.Any:
+            return gl.nondet.exec_prompt(prompt, response_format="json")
+
+        def validator_fn(leader_result: typing.Any) -> bool:
+            if not isinstance(leader_result, gl.vm.Return):
+                return False
+            result = leader_result.calldata
+            if not isinstance(result, dict):
+                return False
+            status = result.get("status")
+            if status not in ("approved", "needs_revision", "unsafe"):
+                return False
+            if status != "approved":
+                return True
+            sequence = result.get("sequence")
+            envelope = result.get("consensus_envelope")
+            return (
+                isinstance(sequence, list)
+                and 4 <= len(sequence) <= 8
+                and isinstance(envelope, dict)
+                and isinstance(envelope.get("requires_human_review"), bool)
+                and envelope.get("duration_band") in ("short", "medium", "long")
+                and envelope.get("facilitation_complexity") in ("simple", "moderate", "advanced")
+                and envelope.get("confidence_band") in ("low", "medium", "high")
             )
 
-        return gl.eq_principle.prompt_non_comparative(
-            produce_plan,
-            task="Validate the proposed ritual plan against the brief and return the proposed JSON unchanged if it satisfies the safety, accessibility, and schema requirements.",
-            criteria="The proposed JSON must be valid and contain status approved, needs_revision, or unsafe. If approved, it must be safe, culturally careful, accessible, and have 4-8 complete sequence steps plus a complete consensus_envelope.",
-        )
+        return gl.vm.run_nondet_unsafe(leader_fn, validator_fn)
 
     def _append_id(self, existing: str, item: str) -> str:
         if existing is None or existing == "":
