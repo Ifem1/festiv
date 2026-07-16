@@ -1,5 +1,5 @@
+# v0.2.20
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
-# Festiv contract schema version: 0.2.20
 
 from genlayer import *
 import json
@@ -98,6 +98,19 @@ class FestivContract(gl.Contract):
         except (TypeError, ValueError):
             return 30
         return max(1, min(duration, 600))
+
+    def _generate_plan(self, brief_json: str) -> str:
+        """Keep the nondeterministic validator call isolated from storage writes."""
+        def produce_plan() -> typing.Any:
+            return gl.nondet.exec_prompt(
+                """Design a safe, accessible community ritual from this JSON brief. Return JSON only with status (approved, needs_revision, or unsafe), ritual_title, ritual_type, emotional_intent, recommended_duration_minutes, tone_summary, cultural_sensitivity_level, facilitator_style, opening_moment, sequence (4-8 complete steps), symbols, adaptation_notes, safety_notes, accessibility_notes, closing_moment, short_version, reasoning_summary, confidence, and consensus_envelope. Do not prescribe harm, forced participation, medical/legal/therapeutic authority, or cultural appropriation.\nBRIEF:\n""" + brief_json,
+                response_format="json",
+            )
+
+        return gl.eq_principle.prompt_comparative(
+            produce_plan,
+            principle="The status must agree exactly. If approved, the ritual must be safe, culturally careful, accessible, and have 4-8 complete sequence steps plus a complete consensus_envelope.",
+        )
 
     def _append_id(self, existing: str, item: str) -> str:
         if existing is None or existing == "":
@@ -236,55 +249,9 @@ class FestivContract(gl.Contract):
             "boundaries": ritual.get("boundaries", ""),
         })
 
-        result_json = gl.eq_principle.prompt_non_comparative(
-            lambda: brief_json,
-            task="""You are one validator in Festiv, a decentralized ritual design protocol.
+        result_json = self._generate_plan(brief_json)
 
-Design a community ritual from the JSON brief provided as input.
-
-Rules:
-- Return JSON only. No markdown. No code fences.
-- Do not claim religious, medical, legal, or therapeutic authority.
-- Do not prescribe harm, forced participation, physical danger, or cultural appropriation.
-- If the brief is unsafe, manipulative, culturally reckless, or too vague, return status needs_revision or unsafe.
-- If approved, create a ritual that is human-led, accessible, culturally careful, and adaptable.
-
-Return a single JSON object with EXACTLY these top-level fields:
-  status (string: "approved", "needs_revision", or "unsafe")
-  ritual_title (string)
-  ritual_type (string)
-  emotional_intent (string)
-  recommended_duration_minutes (integer)
-  tone_summary (string)
-  cultural_sensitivity_level (string: "low", "normal", "high", or "critical")
-  facilitator_style (string)
-  opening_moment (string)
-  sequence (array of 4-8 step objects, each with: step, name, purpose, instructions, estimated_minutes, participant_mode)
-  symbols (array of symbol objects, each with: symbol, meaning, use_instruction, avoid_if)
-  adaptation_notes (array of strings)
-  safety_notes (array of strings)
-  accessibility_notes (array of strings)
-  closing_moment (string)
-  short_version (string)
-  reasoning_summary (string)
-  confidence (float 0.0 to 1.0)
-  consensus_envelope (object with: status, ritual_type, dominant_tone, sensitivity_level, duration_band, facilitation_complexity, requires_human_review, confidence_band)
-
-participant_mode must be one of: silent, spoken, physical, digital, mixed
-duration_band must be one of: short, medium, long
-facilitation_complexity must be one of: simple, moderate, advanced
-confidence_band must be one of: low, medium, high""",
-            criteria="""The response must be valid JSON with all required fields present.
-status must be exactly one of: approved, needs_revision, unsafe.
-If approved: sequence must contain 4-8 steps, each with all required fields.
-If approved: consensus_envelope must be present with all 8 required fields.
-The ritual must be appropriate for the stated group context, tone tags, cultural context, and stated boundaries.
-The ritual must not include dangerous acts, forced participation, or culturally reckless elements.
-Unsafe or manipulative briefs must return status needs_revision or unsafe, never approved.
-requires_human_review must be a boolean (true or false).""",
-        )
-
-        result = self._load(result_json)
+        result = result_json if isinstance(result_json, dict) else self._load(result_json)
 
         # Commit the in-progress state only after the nondeterministic call
         # has returned. A failed validator call therefore leaves the ritual
