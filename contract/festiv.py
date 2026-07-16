@@ -107,9 +107,10 @@ class FestivContract(gl.Contract):
                 response_format="json",
             )
 
-        return gl.eq_principle.prompt_comparative(
+        return gl.eq_principle.prompt_non_comparative(
             produce_plan,
-            principle="The status must agree exactly. If approved, the ritual must be safe, culturally careful, accessible, and have 4-8 complete sequence steps plus a complete consensus_envelope.",
+            task="Validate the proposed ritual plan against the brief and return the proposed JSON unchanged if it satisfies the safety, accessibility, and schema requirements.",
+            criteria="The proposed JSON must be valid and contain status approved, needs_revision, or unsafe. If approved, it must be safe, culturally careful, accessible, and have 4-8 complete sequence steps plus a complete consensus_envelope.",
         )
 
     def _append_id(self, existing: str, item: str) -> str:
